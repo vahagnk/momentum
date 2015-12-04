@@ -8,6 +8,7 @@ class MomentumStrategy:
 
     def __init__(self,series, maPeriod=5, portfolioInitialValue = 1000):
         self.__maPeriod = maPeriod
+        self.__weightMultiplier = 2.0/(maPeriod+1)
         series.price = [float(price) for price in series.price]
         self.__series = series
         self.__series['ma'] = pd.rolling_mean(series, maPeriod)
@@ -32,13 +33,13 @@ class MomentumStrategy:
                     self.__cashPosition -= self.__sharesCount*dayData.price
                     self.__sharePosition += self.__sharesCount
                     self.__posArr[-1] = 1
-                    print str(dateIndex) + " LONG AT PRICE: " + str(dayData.price)
+                    # print str(dateIndex) + " LONG AT PRICE: " + str(dayData.price)
             elif dayData.price < dayData.ma:
                 self.__position = 0
                 self.__cashPosition += self.__sharesCount*dayData.price
                 self.__sharePosition -= self.__sharesCount
                 self.__posArr[-1] = 0
-                print str(dateIndex) + " SHORT AT PRICE: " + str(dayData.price)
+                # print str(dateIndex) + " SHORT AT PRICE: " + str(dayData.price)
             else:
                 self.__position = 1
                 self.__posArr[-1] = 1
@@ -50,25 +51,30 @@ class MomentumStrategy:
         self.__series['returns'] = self.__series['portfolio']/self.__series['portfolio'].shift()-1
         self.__series['cumulativeReturns'] = self.__series['returns'].cumsum()
 
-    def getPortfolioValue(self):
+    def get_value(self):
         return self.__series.portfolio[-1]
 
-    def getPortfolioReturn(self):
+    def get_return(self):
         return self.__series.cumulativeReturns[-1]
 
-    def getPortfolioAnnualReturn(self):
-        holdingPeriodReturn = self.getPortfolioReturn()
+    def get_annual_return(self):
+        holdingPeriodReturn = self.get_return()
         daysCount = len(self.__series)
         return math.pow(holdingPeriodReturn+1,252.0/daysCount)-1
 
-    def getPortfolioExpectedReturn(self):
-        return self.__series.cumulativeReturns.mean()
+    def get_annual_expected_return(self):
+        dailyMeanReturn = self.__series.returns.mean()
+        return math.pow(dailyMeanReturn+1,252.0)-1
 
-    def getPortfolioStd(self):
-        return self.__series.cumulativeReturns.std()
+    def get_std(self):
+        return self.__series.returns.std()
 
-    def getPortfolioSharpeRatio(self):
-        print self.getPortfolioExpectedReturn()/self.getPortfolioStd()
+    def get_annual_std(self):
+        dailyStd = self.get_std()
+        return dailyStd*math.sqrt(252.0)
+
+    def get_sharpe_ratio(self):
+        return self.get_annual_expected_return()/self.get_annual_std()
 
     def plot(self):
         fig,ax = plt.subplots()
@@ -93,4 +99,3 @@ class MomentumStrategy:
         # ax.set_xlim(datemin, datemax)
         fig.autofmt_xdate()
         plt.show()
-
