@@ -6,10 +6,9 @@ import math
 
 class MomentumStrategy:
 
-    def __init__(self,series, maPeriod=5, portfolioInitialValue = 1000):
+    def __init__(self,series, maPeriod = 5, portfolioInitialValue = 1000):
         self.__maPeriod = maPeriod
-        self.__weightMultiplier = 2.0/(maPeriod+1)
-        series.price = [float(price) for price in series.price]
+        series.price = map(float, series.price)
         self.__series = series
         self.__series['ma'] = pd.rolling_mean(series, maPeriod)
         self.__sharesCount = 1
@@ -77,7 +76,7 @@ class MomentumStrategy:
         return self.get_annual_expected_return()/self.get_annual_std()
 
     def plot(self):
-        fig,ax = plt.subplots()
+        fig, ax = plt.subplots()
         ax = plt.subplot(311)
         ax.plot(self.__series.index, self.__series.price,'g', label='Price')
         ax.plot(self.__series.index, self.__series.ma,'r', label='MA '+str(self.__maPeriod))
@@ -90,12 +89,10 @@ class MomentumStrategy:
         portfolioFig = plt.subplot(313)
         portfolioFig.plot(self.__series.index, self.__series['cumulativeReturns'],'b', label='Cumulative Returns')
         portfolioFig.legend(loc='upper left')
+
         # format the ticks
         ax.xaxis.set_major_locator(mdates.MonthLocator())
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
         ax.xaxis.set_minor_locator(mdates.MonthLocator())
-        # datemin = datetime.date(self.__series.index.min().year, 1, 1)
-        # datemax = datetime.date(self.__series.index.max().year + 1, 1, 1)
-        # ax.set_xlim(datemin, datemax)
         fig.autofmt_xdate()
         plt.show()
