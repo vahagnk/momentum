@@ -12,18 +12,26 @@ df = df.sort(['Date'])
 priceSeries = df[['Adj_Close']].rename(columns={'Adj_Close': 'price'})
 resTable = pd.DataFrame(columns=['ma', 'return', 'std', 'sharpe'])
 maxSharpe = 0
+maPeriods = [5*i for i in range(1,13)]
 
-for index, maPeriod in enumerate([5, 10, 20, 50, 200]):
-    momentumStrategy = strategies.MomentumStrategy(priceSeries, maPeriod)
+for maPeriod in maPeriods:
+    momentumStrategy = strategies.MomentumStrategy(priceSeries,maPeriod)
     momentumStrategy.run()
     annualReturn = momentumStrategy.get_annual_return()
     annualStd = momentumStrategy.get_annual_std()
     sharpe = momentumStrategy.get_sharpe_ratio()
-    if sharpe > maxSharpe:
-        maxSharpe = sharpe
-        maxSharpeStrategy = momentumStrategy
-    resTable.loc[index] = [maPeriod, annualReturn, annualStd, sharpe]
+    if sharpe>maxSharpe:
+        maxSharpe=sharpe
+        maxSharpePeriod = maPeriod
+    resTable.loc[len(resTable)] = [maPeriod, str(round(100*annualReturn,2))+"%", str(round(100*annualStd,2))+"%", round(sharpe,2)]
 
 print resTable
-print "Best strategy Sharpe ratio: "+str(maxSharpe)
+print maxSharpe
+maxSharpeStrategy = strategies.MomentumStrategy(priceSeries,maxSharpePeriod)
+maxSharpeStrategy.run()
+
+# plot graphs for the strategy with highest Sharpe ratio
 maxSharpeStrategy.plot()
+
+# plot strategies' cumulative return comparison graph for different MA periods
+# strategies.MomentumStrategy.comparison_plot(priceSeries, maPeriods)
